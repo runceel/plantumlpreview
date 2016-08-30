@@ -60,10 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand('extension.previewPlantUML', () => {
         let editor = vscode.window.activeTextEditor;
         var d = Q.defer();
-        console.log(javaCommand + ' -jar ' + plantumlCommand + ' "' +
-            editor.document.uri.fsPath + '" -o "' + outputPath + '"');
-        child_process.exec(javaCommand + ' -jar ' + plantumlCommand + ' "' +
-            editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8', (error, stdout, stderr) => {
+        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
                 vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
                     .then((success) => {
                         provider.update(previewUri);
@@ -80,16 +77,18 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
         if (e === vscode.window.activeTextEditor.document) {
             let editor = vscode.window.activeTextEditor;
-            console.log(javaCommand + ' -jar ' + plantumlCommand + ' "' +
-                editor.document.uri.fsPath + '" -o "' + outputPath + '"');
-            child_process.exec(javaCommand + ' -jar ' + plantumlCommand + ' "' +
-                editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8', (error, stdout, stderr) => {
+            child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
                     provider.update(previewUri);
                 });
         }
     });
 
     context.subscriptions.push(disposable);
+}
+
+function buildPlantUMLCommand(javaCommand: string, plantumlCommand: string, outputPath: string, editor: vscode.TextEditor) {
+    return javaCommand + ' -jar ' + plantumlCommand + ' "' +
+        editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8';
 }
 
 // this method is called when your extension is deactivated
