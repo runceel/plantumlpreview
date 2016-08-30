@@ -1,4 +1,4 @@
-# okazukiplantuml README
+# okazuki PlantUML
 
 Visual Studio Code PlantUML plugin.
 
@@ -18,9 +18,12 @@ Set enviroment variable.
 
 ## Known Issues
 
-- Executed preview process all text file. 
+- Execute preview process all text file. 
 
 ## Release Notes
+
+### 0.0.2
+- Set encoding utf-8
 
 ### 0.0.1
 - First release.

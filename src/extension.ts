@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
         console.log(javaCommand + ' -jar ' + plantumlCommand + ' "' +
             editor.document.uri.fsPath + '" -o "' + outputPath + '"');
         child_process.exec(javaCommand + ' -jar ' + plantumlCommand + ' "' +
-            editor.document.uri.fsPath + '" -o "' + outputPath + '"', (error, stdout, stderr) => {
+            editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8', (error, stdout, stderr) => {
                 vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
                     .then((success) => {
                         provider.update(previewUri);
@@ -83,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
             console.log(javaCommand + ' -jar ' + plantumlCommand + ' "' +
                 editor.document.uri.fsPath + '" -o "' + outputPath + '"');
             child_process.exec(javaCommand + ' -jar ' + plantumlCommand + ' "' +
-                editor.document.uri.fsPath + '" -o "' + outputPath + '"', (error, stdout, stderr) => {
+                editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8', (error, stdout, stderr) => {
                     provider.update(previewUri);
                 });
         }
