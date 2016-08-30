@@ -6,7 +6,7 @@ PlantUML is [here](http://plantuml.com/).
 
 ## Features
 
-PlantUML text previewer.
+PlantUML text previewer. Execute `PlantUML Preview` command then start preview.
 
 ## Extension Settings
 
