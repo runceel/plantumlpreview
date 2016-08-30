@@ -67,7 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
                     .then((success) => {
                         provider.update(previewUri);
-                         d.resolve(); 
+                        d.resolve(); 
                     }, (reason) => { 
                         vscode.window.showErrorMessage(reason); 
                         d.resolve();
