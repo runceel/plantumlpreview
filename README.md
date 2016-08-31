@@ -20,6 +20,8 @@ Set enviroment variable.
 - PLANTUML_HOME: plantuml.jar installed directory.
 - TEMP: temp directory.
 
+![Preview window](images/preview.png)
+
 ## Known Issues
 
 - Execute preview process all text file. 
