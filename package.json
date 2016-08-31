@@ -2,7 +2,7 @@
   "name": "okazukiplantuml",
   "displayName": "okazuki PlantUML",
   "description": "vs code plantuml plugin. You can preview uml diagram.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "okazuki",
   "engines": {
     "vscode": "^1.0.0"
@@ -11,7 +11,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:extension.previewPlantUML"
+    "onCommand:extension.previewPlantUML",
+    "onCommand:extension.exportPlantUML"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -19,6 +20,10 @@
       {
         "command": "extension.previewPlantUML",
         "title": "PlantUML Preview"
+      },
+      {
+        "command": "extension.exportPlantUML",
+        "title": "PlantUML Export"
       }
     ]
   },

@@ -11,8 +11,8 @@ export function activate(context: vscode.ExtensionContext) {
         return;
     }
 
-    let plantumlCommand = '"' + path.join(process.env['PLANTUML_HOME'], 'plantuml.jar') + '"';
-    let javaCommand = '"' + path.join(process.env['JAVA_HOME'], 'bin', 'java.exe') + '"';
+    let plantumlCommand = path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
+    let javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java.exe');
     let outputPath = path.join(process.env['TEMP'], 'okazukiplantuml');
 
     class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
@@ -74,6 +74,12 @@ export function activate(context: vscode.ExtensionContext) {
         return d.promise;
     });
 
+    let exportDisposable = vscode.commands.registerCommand('extension.exportPlantUML', () => {
+        let editor = vscode.window.activeTextEditor;
+        let exportPath = path.dirname(editor.document.uri.fsPath);
+        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, exportPath, editor), (error, stdout, stderr) => {});
+    });
+
     vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
         if (e === vscode.window.activeTextEditor.document) {
             let editor = vscode.window.activeTextEditor;
@@ -83,11 +89,11 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    context.subscriptions.push(disposable);
+    context.subscriptions.push(disposable, exportDisposable);
 }
 
 function buildPlantUMLCommand(javaCommand: string, plantumlCommand: string, outputPath: string, editor: vscode.TextEditor) {
-    return javaCommand + ' -Djava.awt.headless=true -jar ' + plantumlCommand + ' "' +
+    return '"' + javaCommand + '" -Djava.awt.headless=true -jar "' + plantumlCommand + '" "' +
         editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8';
 }
 

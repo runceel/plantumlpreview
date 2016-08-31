@@ -6,7 +6,11 @@ PlantUML is [here](http://plantuml.com/).
 
 ## Features
 
-PlantUML text previewer. Execute `PlantUML Preview` command then start preview.
+PlantUML image previewer.
+
+### Commands
+- `PlantUML Preview` : Start PlantUML preview.
+- `PlantUML Export` : Export png to same directory.
 
 ## Extension Settings
 
@@ -21,6 +25,9 @@ Set enviroment variable.
 - Execute preview process all text file. 
 
 ## Release Notes
+
+### 0.0.4
+- Export png image.
 
 ### 0.0.3
 - Hide PlantUML window.
