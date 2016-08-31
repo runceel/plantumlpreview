@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
         private extractSnippet(): string {
             let editor = vscode.window.activeTextEditor;
             var r = `<body>
-                <img src='file://` + path.join(outputPath, path.basename(editor.document.uri.fsPath, '.txt')) + `.png?dummy=` + new Date().getTime() + `' />
+                <img src='file://` + path.join(outputPath, path.basename(editor.document.uri.fsPath, path.extname(editor.document.uri.fsPath))) + `.png?dummy=` + new Date().getTime() + `' />
             </body>`;
             return r;
         }
