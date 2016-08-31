@@ -88,7 +88,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 function buildPlantUMLCommand(javaCommand: string, plantumlCommand: string, outputPath: string, editor: vscode.TextEditor) {
     return javaCommand + ' -jar ' + plantumlCommand + ' "' +
-        editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8';
+        editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8'
+        + ' -Djava.awt.headless=true';
 }
 
 // this method is called when your extension is deactivated
