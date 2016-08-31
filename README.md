@@ -22,6 +22,10 @@ Set enviroment variable.
 
 ## Release Notes
 
+### 0.0.3
+- Hide PlantUML window.
+- Support filename extension other than '.txt' 
+
 ### 0.0.2
 - Set encoding utf-8
 
