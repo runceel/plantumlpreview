@@ -8,25 +8,28 @@ PlantUML is [here](http://plantuml.com/).
 
 PlantUML image previewer.
 
+![Preview window](images/preview.png?raw=true)
+
 ### Commands
 - `PlantUML Preview` : Start PlantUML preview.
 - `PlantUML Export` : Export png to same directory.
 
 ## Extension Settings
 
-Set enviroment variable.
+**Must** set enviroment variable.
 
 - JAVA_HOME: Java SDK installed directory.
 - PLANTUML_HOME: plantuml.jar installed directory.
 - TEMP: temp directory.
-
-![Preview window](images/preview.png)
 
 ## Known Issues
 
 - Execute preview process all text file. 
 
 ## Release Notes
+
+### 0.0.5
+- Update preview window when changed active editor.
 
 ### 0.0.4
 - Export png image.

@@ -80,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
         child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, exportPath, editor), (error, stdout, stderr) => {});
     });
 
-    vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
+    let saveTextDocumentDisposable = vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
         if (e === vscode.window.activeTextEditor.document) {
             let editor = vscode.window.activeTextEditor;
             child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
@@ -89,7 +89,13 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    context.subscriptions.push(disposable, exportDisposable);
+    let activeEditorChangedDisposable = vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
+        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
+                provider.update(previewUri);
+            });
+    });
+
+    context.subscriptions.push(disposable, exportDisposable, saveTextDocumentDisposable, activeEditorChangedDisposable);
 }
 
 function buildPlantUMLCommand(javaCommand: string, plantumlCommand: string, outputPath: string, editor: vscode.TextEditor) {
