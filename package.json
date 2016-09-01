@@ -8,6 +8,9 @@
     "vscode": "^1.0.0"
   },
   "license": "https://github.com/runceel/plantumlpreview/blob/master/LICENSE",
+  "bugs": {
+    "url": "https://github.com/runceel/plantumlpreview/issues"
+  },
   "categories": [
     "Other"
   ],
