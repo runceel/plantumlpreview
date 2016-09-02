@@ -7,7 +7,9 @@ import * as Q from 'q';
 
 export function activate(context: vscode.ExtensionContext) {
     if (!process.env['PLANTUML_HOME'] || !process.env['JAVA_HOME'] || !process.env['TEMP']) {
-        vscode.window.showErrorMessage('Setup enviroment variable. PLANTUML_HOME, JAVA_HOME, TEMP'); 
+        if (!process.env['PLANTUML_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. PLANTUML_HOME.'); } 
+        if (!process.env['JAVA_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. JAVA_HOME.'); } 
+        if (!process.env['TEMP']) { vscode.window.showErrorMessage('Set enviroment variable. TEMP.'); } 
         return;
     }
 
