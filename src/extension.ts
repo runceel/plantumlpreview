@@ -13,8 +13,9 @@ export function activate(context: vscode.ExtensionContext) {
         return;
     }
 
+    let isDebug = !!process.env['OKAZUKIUML_DEBUG'];
     let plantumlCommand = path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
-    let javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java.exe');
+    let javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java');
     let outputPath = path.join(process.env['TEMP'], 'okazukiplantuml');
 
     class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
@@ -63,14 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
         let editor = vscode.window.activeTextEditor;
         var d = Q.defer();
         child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
-            if (error) {
-                vscode.window.showErrorMessage(error.message);
-            }
-
-            if (stderr) {
-                vscode.window.showErrorMessage(stderr);
-            }
-
+            showDebugError(isDebug, error, stderr);
             vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
                 .then((success) => {
                     provider.update(previewUri);
@@ -94,14 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (e === vscode.window.activeTextEditor.document) {
             let editor = vscode.window.activeTextEditor;
             child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
-                if (error) {
-                    vscode.window.showErrorMessage(error.message);
-                }
-
-                if (stderr) {
-                    vscode.window.showErrorMessage(stderr);
-                }
-
+                showDebugError(isDebug, error, stderr);
                 provider.update(previewUri);
             });
         }
@@ -109,14 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     let activeEditorChangedDisposable = vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
         child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
-            if (error) {
-                vscode.window.showErrorMessage(error.message);
-            }
-
-            if (stderr) {
-                vscode.window.showErrorMessage(stderr);
-            }
-            
+            showDebugError(isDebug, error, stderr);
             provider.update(previewUri);
         });
     });
@@ -127,6 +107,17 @@ export function activate(context: vscode.ExtensionContext) {
 function buildPlantUMLCommand(javaCommand: string, plantumlCommand: string, outputPath: string, editor: vscode.TextEditor) {
     return '"' + javaCommand + '" -Djava.awt.headless=true -jar "' + plantumlCommand + '" "' +
         editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8';
+}
+
+function showDebugError(isDebug: boolean, error: Error, stderr: string) {
+    if (!isDebug) { return; }
+    if (error) {
+        vscode.window.showErrorMessage(error.message);
+    }
+
+    if (stderr) {
+        vscode.window.showErrorMessage(stderr);
+    }        
 }
 
 // this method is called when your extension is deactivated
