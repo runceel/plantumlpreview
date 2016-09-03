@@ -28,6 +28,9 @@ PlantUML image previewer.
 
 ## Release Notes
 
+### 0.0.8
+- Remove .exe extensions from java command. Maybe support Mac & Linux.
+
 ### 0.0.7
 - More error message improvement.
 
