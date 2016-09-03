@@ -63,15 +63,23 @@ export function activate(context: vscode.ExtensionContext) {
         let editor = vscode.window.activeTextEditor;
         var d = Q.defer();
         child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
-                vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
-                    .then((success) => {
-                        provider.update(previewUri);
-                        d.resolve(); 
-                    }, (reason) => { 
-                        vscode.window.showErrorMessage(reason); 
-                        d.resolve();
-                    });            
-            });
+            if (error) {
+                vscode.window.showErrorMessage(error.message);
+            }
+
+            if (stderr) {
+                vscode.window.showErrorMessage(stderr);
+            }
+
+            vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
+                .then((success) => {
+                    provider.update(previewUri);
+                    d.resolve(); 
+                }, (reason) => { 
+                    vscode.window.showErrorMessage(reason); 
+                    d.resolve();
+                });            
+        });
 
         return d.promise;
     });
@@ -86,15 +94,31 @@ export function activate(context: vscode.ExtensionContext) {
         if (e === vscode.window.activeTextEditor.document) {
             let editor = vscode.window.activeTextEditor;
             child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
-                    provider.update(previewUri);
-                });
+                if (error) {
+                    vscode.window.showErrorMessage(error.message);
+                }
+
+                if (stderr) {
+                    vscode.window.showErrorMessage(stderr);
+                }
+
+                provider.update(previewUri);
+            });
         }
     });
 
     let activeEditorChangedDisposable = vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
         child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
-                provider.update(previewUri);
-            });
+            if (error) {
+                vscode.window.showErrorMessage(error.message);
+            }
+
+            if (stderr) {
+                vscode.window.showErrorMessage(stderr);
+            }
+            
+            provider.update(previewUri);
+        });
     });
 
     context.subscriptions.push(disposable, exportDisposable, saveTextDocumentDisposable, activeEditorChangedDisposable);

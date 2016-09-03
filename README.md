@@ -28,6 +28,9 @@ PlantUML image previewer.
 
 ## Release Notes
 
+### 0.0.7
+- More error message improvement.
+
 ### 0.0.6
 - Error message improvement.
 
