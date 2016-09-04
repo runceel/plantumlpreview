@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import * as Q from 'q';
+import * as fs from 'fs';
 
 export function activate(context: vscode.ExtensionContext) {
     if (!process.env['PLANTUML_HOME'] || !process.env['JAVA_HOME'] || !process.env['TEMP']) {
@@ -63,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand('extension.previewPlantUML', () => {
         let editor = vscode.window.activeTextEditor;
         var d = Q.defer();
-        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
+        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor.document.uri.fsPath), (error, stdout, stderr) => {
             showDebugError(isDebug, error, stderr);
             vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
                 .then((success) => {
@@ -81,13 +82,13 @@ export function activate(context: vscode.ExtensionContext) {
     let exportDisposable = vscode.commands.registerCommand('extension.exportPlantUML', () => {
         let editor = vscode.window.activeTextEditor;
         let exportPath = path.dirname(editor.document.uri.fsPath);
-        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, exportPath, editor), (error, stdout, stderr) => {});
+        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, exportPath, editor.document.uri.fsPath), (error, stdout, stderr) => {});
     });
 
     let saveTextDocumentDisposable = vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
         if (e === vscode.window.activeTextEditor.document) {
             let editor = vscode.window.activeTextEditor;
-            child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
+            child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor.document.uri.fsPath), (error, stdout, stderr) => {
                 showDebugError(isDebug, error, stderr);
                 provider.update(previewUri);
             });
@@ -95,18 +96,35 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let activeEditorChangedDisposable = vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
-        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor), (error, stdout, stderr) => {
+        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor.document.uri.fsPath), (error, stdout, stderr) => {
             showDebugError(isDebug, error, stderr);
             provider.update(previewUri);
         });
     });
 
+    let changedTimestamp = new Date().getTime();
+    let selectionChangedDisposable = vscode.window.onDidChangeTextEditorSelection((e: vscode.TextEditorSelectionChangeEvent) => {
+        changedTimestamp = new Date().getTime();
+        setTimeout(() => {
+            if (new Date().getTime() - changedTimestamp >= 400) {
+                let editor = e.textEditor;
+                let tempFilePath = path.join(outputPath, path.basename(e.textEditor.document.uri.fsPath));
+                fs.writeFile(tempFilePath, e.textEditor.document.getText(), (err) => {
+                    child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, tempFilePath), (error, stdout, stderr) => {
+                        showDebugError(isDebug, error, stderr);
+                        provider.update(previewUri);
+                    });
+                });
+            }
+        }, 500);
+    });
+
     context.subscriptions.push(disposable, exportDisposable, saveTextDocumentDisposable, activeEditorChangedDisposable);
 }
 
-function buildPlantUMLCommand(javaCommand: string, plantumlCommand: string, outputPath: string, editor: vscode.TextEditor) {
+function buildPlantUMLCommand(javaCommand: string, plantumlCommand: string, outputPath: string, targetPath: string) {
     return '"' + javaCommand + '" -Djava.awt.headless=true -jar "' + plantumlCommand + '" "' +
-        editor.document.uri.fsPath + '" -o "' + outputPath + '" -charset utf-8';
+        targetPath + '" -o "' + outputPath + '" -charset utf-8';
 }
 
 function showDebugError(isDebug: boolean, error: Error, stderr: string) {
