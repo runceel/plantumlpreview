@@ -28,6 +28,9 @@ PlantUML image previewer.
 
 ## Release Notes
 
+### 0.0.11
+- Bugfix: Crush when init process.
+
 ### 0.0.10
 - Correspondence to unsaved file.
 

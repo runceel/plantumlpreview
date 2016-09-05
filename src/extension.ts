@@ -19,7 +19,8 @@ export function activate(context: vscode.ExtensionContext) {
     const plantumlCommand = path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
     const javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java');
     const outputPath = path.join(process.env['TEMP'], 'okazukiplantuml');
-
+    fs.mkdirSync(outputPath);
+    
     // ContentProvider
     class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
         private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
@@ -65,7 +66,9 @@ export function activate(context: vscode.ExtensionContext) {
         let tempFilePath = path.join(outputPath, path.basename(editor.document.uri.fsPath));
         fs.writeFile(tempFilePath, editor.document.getText(), (err) => {
             if (isDebug) {
-                vscode.window.showErrorMessage(err.message);
+                if (err) {
+                    vscode.window.showErrorMessage(err.message);
+                }
             }
             child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, tempFilePath), (error, stdout, stderr) => {
                 showDebugError(isDebug, error, stderr);

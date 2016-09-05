@@ -2,7 +2,7 @@
   "name": "okazukiplantuml",
   "displayName": "okazuki PlantUML",
   "description": "vs code plantuml plugin. You can preview uml diagram.",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "publisher": "okazuki",
   "engines": {
     "vscode": "^1.0.0"
