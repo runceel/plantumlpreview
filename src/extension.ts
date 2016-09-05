@@ -14,11 +14,13 @@ export function activate(context: vscode.ExtensionContext) {
         return;
     }
 
-    let isDebug = !!process.env['OKAZUKIUML_DEBUG'];
-    let plantumlCommand = path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
-    let javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java');
-    let outputPath = path.join(process.env['TEMP'], 'okazukiplantuml');
+    // 定数
+    const isDebug = !!process.env['OKAZUKIUML_DEBUG'];
+    const plantumlCommand = path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
+    const javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java');
+    const outputPath = path.join(process.env['TEMP'], 'okazukiplantuml');
 
+    // ContentProvider
     class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
         private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
 
@@ -57,15 +59,32 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    // editorの内容をプレビューする
+    function executePreview(editor: vscode.TextEditor): Q.Promise<{}> {
+        let q = Q.defer();
+        let tempFilePath = path.join(outputPath, path.basename(editor.document.uri.fsPath));
+        fs.writeFile(tempFilePath, editor.document.getText(), (err) => {
+            if (isDebug) {
+                vscode.window.showErrorMessage(err.message);
+            }
+            child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, tempFilePath), (error, stdout, stderr) => {
+                showDebugError(isDebug, error, stderr);
+                provider.update(previewUri);
+                q.resolve();
+            });
+        });
+        return q.promise;
+    }
+
     let provider = new TextDocumentContentProvider();
     let registration = vscode.workspace.registerTextDocumentContentProvider('plantuml-preview', provider);
 
-    let previewUri = vscode.Uri.parse('plantuml-preview://authority/plantuml-preview');    
+    let previewUri = vscode.Uri.parse('plantuml-preview://authority/plantuml-preview');   
+
     let disposable = vscode.commands.registerCommand('extension.previewPlantUML', () => {
         let editor = vscode.window.activeTextEditor;
         var d = Q.defer();
-        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor.document.uri.fsPath), (error, stdout, stderr) => {
-            showDebugError(isDebug, error, stderr);
+        executePreview(editor).then(_ =>  {
             vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
                 .then((success) => {
                     provider.update(previewUri);
@@ -75,7 +94,6 @@ export function activate(context: vscode.ExtensionContext) {
                     d.resolve();
                 });            
         });
-
         return d.promise;
     });
 
@@ -88,38 +106,27 @@ export function activate(context: vscode.ExtensionContext) {
     let saveTextDocumentDisposable = vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
         if (e === vscode.window.activeTextEditor.document) {
             let editor = vscode.window.activeTextEditor;
-            child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor.document.uri.fsPath), (error, stdout, stderr) => {
-                showDebugError(isDebug, error, stderr);
-                provider.update(previewUri);
-            });
+            executePreview(editor);
         }
     });
 
     let activeEditorChangedDisposable = vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
-        child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, editor.document.uri.fsPath), (error, stdout, stderr) => {
-            showDebugError(isDebug, error, stderr);
-            provider.update(previewUri);
-        });
+        executePreview(editor);
     });
 
+    // 変更時のプレビュー更新
     let changedTimestamp = new Date().getTime();
     let selectionChangedDisposable = vscode.window.onDidChangeTextEditorSelection((e: vscode.TextEditorSelectionChangeEvent) => {
         changedTimestamp = new Date().getTime();
         setTimeout(() => {
             if (new Date().getTime() - changedTimestamp >= 400) {
                 let editor = e.textEditor;
-                let tempFilePath = path.join(outputPath, path.basename(e.textEditor.document.uri.fsPath));
-                fs.writeFile(tempFilePath, e.textEditor.document.getText(), (err) => {
-                    child_process.exec(buildPlantUMLCommand(javaCommand, plantumlCommand, outputPath, tempFilePath), (error, stdout, stderr) => {
-                        showDebugError(isDebug, error, stderr);
-                        provider.update(previewUri);
-                    });
-                });
+                executePreview(editor);
             }
         }, 500);
     });
 
-    context.subscriptions.push(disposable, exportDisposable, saveTextDocumentDisposable, activeEditorChangedDisposable);
+    context.subscriptions.push(disposable, exportDisposable, saveTextDocumentDisposable, activeEditorChangedDisposable, selectionChangedDisposable);        
 }
 
 function buildPlantUMLCommand(javaCommand: string, plantumlCommand: string, outputPath: string, targetPath: string) {
@@ -140,4 +147,12 @@ function showDebugError(isDebug: boolean, error: Error, stderr: string) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+    let isDebug = !!process.env['OKAZUKIUML_DEBUG'];
+    let outputPath = path.join(process.env['TEMP'], 'okazukiplantuml');
+    fs.rmdir(outputPath, err => {
+        if (isDebug) {
+            vscode.window.showErrorMessage(err.message);
+        }
+    });
+        
 }

@@ -28,6 +28,9 @@ PlantUML image previewer.
 
 ## Release Notes
 
+### 0.0.10
+- Correspondence to unsaved file.
+
 ### 0.0.9
 - Realtime preview.
 
