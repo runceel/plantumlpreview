@@ -8,7 +8,7 @@ PlantUML is [here](http://plantuml.com/).
 
 PlantUML image previewer.
 
-![Preview window](images/preview.png?raw=true)
+![Preview window](images/plantuml.gif?raw=true)
 
 ### Commands
 - `PlantUML Preview` : Start PlantUML preview.
