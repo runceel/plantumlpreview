@@ -19,7 +19,11 @@ export function activate(context: vscode.ExtensionContext) {
     const plantumlCommand = path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
     const javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java');
     const outputPath = path.join(process.env['TEMP'], 'okazukiplantuml');
-    fs.mkdirSync(outputPath);
+    try {
+        fs.accessSync(outputPath);
+    } catch (e) {
+        fs.mkdirSync(outputPath);
+    }
     
     // ContentProvider
     class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
@@ -119,12 +123,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 変更時のプレビュー更新
     let changedTimestamp = new Date().getTime();
-    let selectionChangedDisposable = vscode.window.onDidChangeTextEditorSelection((e: vscode.TextEditorSelectionChangeEvent) => {
+    let selectionChangedDisposable = vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
+        if (vscode.window.activeTextEditor.document !== e.document) { return; }
         changedTimestamp = new Date().getTime();
         setTimeout(() => {
             if (new Date().getTime() - changedTimestamp >= 400) {
-                let editor = e.textEditor;
-                executePreview(editor);
+                executePreview(vscode.window.activeTextEditor);
             }
         }, 500);
     });
