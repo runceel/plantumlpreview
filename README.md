@@ -28,6 +28,9 @@ PlantUML image previewer.
 
 ## Release Notes
 
+### 0.0.13
+- Support relative path include.
+
 ### 0.0.12
 - Bugfix: Crush when init process(too...).
 
