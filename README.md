@@ -12,7 +12,7 @@ PlantUML image previewer.
 
 ### Commands
 - `PlantUML Preview` : Start PlantUML preview.
-- `PlantUML Export` : Export png to same directory.
+- `PlantUML Export ***(*** is format type)` : Export png, svg, eps, etc... to same directory.
 
 ## Extension Settings
 
@@ -20,13 +20,17 @@ PlantUML image previewer.
 
 - JAVA_HOME: Java SDK installed directory.
 - PLANTUML_HOME: plantuml.jar installed directory.
-- TEMP: temp directory.
 
 ## Known Issues
 
-- Execute preview process all text file. 
+- Execute preview process all text file.
 
 ## Release Notes
+
+### 0.1.0
+- Refactor
+- Support many export format.
+- No use TEMP env value.
 
 ### 0.0.13
 - Support relative path include.
