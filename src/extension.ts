@@ -226,14 +226,4 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-    let isDebug = !!process.env['OKAZUKIUML_DEBUG'];
-    let outputPath = path.join(process.env['TEMP'], 'okazukiplantuml');
-    fs.rmdir(outputPath, err => {
-        if (isDebug) {
-            if (err) {
-                vscode.window.showErrorMessage(err.message);
-            }
-        }
-    });
-        
 }
