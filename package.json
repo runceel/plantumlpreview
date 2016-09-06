@@ -17,7 +17,18 @@
   ],
   "activationEvents": [
     "onCommand:extension.previewPlantUML",
-    "onCommand:extension.exportPlantUML"
+    "onCommand:extension.exportPlantUML-png",
+    "onCommand:extension.exportPlantUML-svg",
+    "onCommand:extension.exportPlantUML-eps",
+    "onCommand:extension.exportPlantUML-pdf",
+    "onCommand:extension.exportPlantUML-vdx",
+    "onCommand:extension.exportPlantUML-xmi",
+    "onCommand:extension.exportPlantUML-scxml",
+    "onCommand:extension.exportPlantUML-html",
+    "onCommand:extension.exportPlantUML-txt",
+    "onCommand:extension.exportPlantUML-utxt",
+    "onCommand:extension.exportPlantUML-latex",
+    "onCommand:extension.exportPlantUML-latex:nopreamble"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -27,8 +38,52 @@
         "title": "PlantUML Preview"
       },
       {
-        "command": "extension.exportPlantUML",
-        "title": "PlantUML Export"
+        "command": "extension.exportPlantUML-png",
+        "title": "PlantUML Export PNG"
+      },
+      {
+        "command": "extension.exportPlantUML-svg",
+        "title": "PlantUML Export SVG"
+      },
+      {
+        "command": "extension.exportPlantUML-eps",
+        "title": "PlantUML Export EPS"
+      },
+      {
+        "command": "extension.exportPlantUML-pdf",
+        "title": "PlantUML Export PDF"
+      },
+      {
+        "command": "extension.exportPlantUML-vdx",
+        "title": "PlantUML Export VDX"
+      },
+      {
+        "command": "extension.exportPlantUML-xmi",
+        "title": "PlantUML Export XMI"
+      },
+      {
+        "command": "extension.exportPlantUML-scxml",
+        "title": "PlantUML Export SCXML"
+      },
+      {
+        "command": "extension.exportPlantUML-html",
+        "title": "PlantUML Export HTML"
+      },
+      {
+        "command": "extension.exportPlantUML-txt",
+        "title": "PlantUML Export TXT"
+      },
+      {
+        "command": "extension.exportPlantUML-utxt",
+        "title": "PlantUML Export UTXT"
+      },
+      {
+        "command": "extension.exportPlantUML-latex",
+        "title": "PlantUML Export LATEX"
+      },
+      {
+        "command": "extension.exportPlantUML-latex:nopreamble",
+        "title": "PlantUML Export LATEX:NOPREAMBLE"
       }
     ]
   },

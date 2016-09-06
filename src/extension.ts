@@ -16,14 +16,9 @@ export function activate(context: vscode.ExtensionContext) {
     // 定数
     const isDebug = !!process.env['OKAZUKIUML_DEBUG'];
 
-    class FsUtils {
-        public static mkdirExSync(dirPath: string): void {
-            try {
-                fs.mkdirSync(dirPath);
-            } catch (e) {
-                FsUtils.mkdirExSync(path.dirname(dirPath));
-                FsUtils.mkdirExSync(dirPath);
-            }
+    class PlantUMLExportFormat {
+        constructor(public label: string,
+            public format: string) {
         }
     }
 
@@ -32,6 +27,14 @@ export function activate(context: vscode.ExtensionContext) {
             return new PlantUML(
                 path.dirname(editor.document.uri.fsPath),
                 editor.document.getText().trim()
+            );
+        }
+
+        public static fromExportFormat(inputPath: string,format: PlantUMLExportFormat): PlantUML {
+            return new PlantUML(
+                path.dirname(inputPath),
+                "",
+                [inputPath, format.format, '-charset', 'utf-8', '-o', path.dirname(inputPath)]
             );
         }
 
@@ -46,9 +49,12 @@ export function activate(context: vscode.ExtensionContext) {
         public execute(): Q.Promise<string> {
             let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-jar', PlantUML.plantUmlCommand];
             params.push(...this.args);
+            console.log(params);
             let process = child_process.spawn(PlantUML.javaCommand, params);
-            process.stdin.write(this.plantUmlText);
-            process.stdin.end();
+            if (!!this.plantUmlText) {
+                process.stdin.write(this.plantUmlText);
+                process.stdin.end();
+            }
             return Q.Promise<string>((resolve, reject, notify) => {
                 var output = '';
                 process.stdout.on('data', x => {
@@ -65,6 +71,9 @@ export function activate(context: vscode.ExtensionContext) {
                 process.stderr.on('close', () => {
                     if (isDebug && !!stderror) {
                         vscode.window.showErrorMessage(stderror);
+                    }
+                    if (!!stderror) {
+                        console.log(stderror);
                     }
                 });
             });
@@ -111,6 +120,43 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    class CommandManager {
+        private static formats = [
+            new PlantUMLExportFormat('png', '-tpng'),
+            new PlantUMLExportFormat('svg', '-tsvg'),
+            new PlantUMLExportFormat('eps', '-teps'),
+            new PlantUMLExportFormat('pdf', '-tpdf'),
+            new PlantUMLExportFormat('vdx', '-tvdx'),
+            new PlantUMLExportFormat('xmi', '-txmi'),
+            new PlantUMLExportFormat('scxml', '-tscxml'),
+            new PlantUMLExportFormat('html', '-thtml'),
+            new PlantUMLExportFormat('txt', '-ttxt'),
+            new PlantUMLExportFormat('utxt', '-tutxt'),
+            new PlantUMLExportFormat('latex', '-tlatex'),
+            new PlantUMLExportFormat('latex:nopreamble', '-tlatex:nopreamble'),
+        ];
+
+
+        public static registerExportCommands(): vscode.Disposable[] {
+            let disposables: vscode.Disposable[] = [];
+            CommandManager.formats.forEach(x => {
+                let d = vscode.commands.registerCommand('extension.exportPlantUML-' + x.label, () => {
+                    let command = PlantUML.fromExportFormat(
+                        vscode.window.activeTextEditor.document.uri.fsPath, 
+                        x);
+                    let q = Q.defer();
+                    command.execute().then(_ => {
+                        q.resolve();
+                    });
+                    return q;
+                });
+                disposables.push(d);
+            });
+            return disposables;
+        }
+    }
+
+
     let provider = new TextDocumentContentProvider();
     let registration = vscode.workspace.registerTextDocumentContentProvider('plantuml-preview', provider);
 
@@ -134,10 +180,8 @@ export function activate(context: vscode.ExtensionContext) {
         return d.promise;
     });
 
-    let exportDisposable = vscode.commands.registerCommand('extension.exportPlantUML', () => {
-        let editor = vscode.window.activeTextEditor;
-        let exportPath = path.dirname(editor.document.uri.fsPath);
-    });
+    let disposables = CommandManager.registerExportCommands();
+
 
     let saveTextDocumentDisposable = vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
         if (e === vscode.window.activeTextEditor.document) {
@@ -157,7 +201,7 @@ export function activate(context: vscode.ExtensionContext) {
                 });
     });
 
-    // 変更時のプレビュー更新
+    // update preview
     let changedTimestamp = new Date().getTime();
     let selectionChangedDisposable = vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
         if (vscode.window.activeTextEditor.document !== e.document) { return; }
@@ -173,18 +217,11 @@ export function activate(context: vscode.ExtensionContext) {
         }, 500);
     });
 
-    context.subscriptions.push(disposable, exportDisposable, saveTextDocumentDisposable, activeEditorChangedDisposable, selectionChangedDisposable);        
-}
-
-function showDebugError(isDebug: boolean, error: Error, stderr: string) {
-    if (!isDebug) { return; }
-    if (error) {
-        vscode.window.showErrorMessage(error.message);
-    }
-
-    if (stderr) {
-        vscode.window.showErrorMessage(stderr);
-    }        
+    context.subscriptions.push(disposable, 
+        ...disposables,
+        saveTextDocumentDisposable, 
+        activeEditorChangedDisposable, 
+        selectionChangedDisposable);        
 }
 
 // this method is called when your extension is deactivated
