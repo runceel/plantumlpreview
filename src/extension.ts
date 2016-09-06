@@ -67,7 +67,15 @@ export function activate(context: vscode.ExtensionContext) {
     // editorの内容をプレビューする
     function executePreview(editor: vscode.TextEditor): Q.Promise<{}> {
         let q = Q.defer();
-        let tempFilePath = path.join(outputPath, path.basename(editor.document.uri.fsPath));
+        let tempFilePath = path.join(outputPath,
+            path.basename(vscode.workspace.rootPath),
+            editor.document.uri.fsPath.substr(vscode.workspace.rootPath.length));
+        try {
+            fs.accessSync(path.dirname(tempFilePath));
+        } catch (e) {
+            mkdirExSync(path.dirname(tempFilePath));
+        }
+
         fs.writeFile(tempFilePath, editor.document.getText(), (err) => {
             if (isDebug) {
                 if (err) {
@@ -80,6 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
                 q.resolve();
             });
         });
+
         return q.promise;
     }
 
@@ -150,6 +159,16 @@ function showDebugError(isDebug: boolean, error: Error, stderr: string) {
     if (stderr) {
         vscode.window.showErrorMessage(stderr);
     }        
+}
+
+// mkdir recurcive
+function mkdirExSync(dirPath: string) {
+    try {
+        fs.mkdirSync(dirPath);
+    } catch (e) {
+        mkdirExSync(path.dirname(dirPath));
+        mkdirExSync(dirPath);
+    }
 }
 
 // this method is called when your extension is deactivated
