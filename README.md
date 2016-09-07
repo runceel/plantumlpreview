@@ -31,6 +31,9 @@ Optional.
 
 ## Release Notes
 
+### 0.1.3
+- Change encoding setting method. Change -chaset to -Dfile.encoding.
+
 ### 0.1.2
 - Refactor
 
