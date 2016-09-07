@@ -40,9 +40,11 @@ module OkazukiPlantUML {
 
         private registerCommands(): void {
             let disposable = vscode.commands.registerCommand('extension.previewPlantUML', () => {
+                let editor = vscode.window.activeTextEditor;
                 return vscode.commands.executeCommand('vscode.previewHtml', TextDocumentContentProvider.previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
                     .then((success) => {
                         this.provider.update(TextDocumentContentProvider.previewUri);
+                        editor.show();
                     }, (reason) => { 
                         vscode.window.showErrorMessage(reason); 
                     });            
@@ -82,7 +84,8 @@ module OkazukiPlantUML {
         public static fromTextEditor(editor: vscode.TextEditor): PlantUML {
             return new PlantUML(
                 path.dirname(editor.document.uri.fsPath),
-                editor.document.getText().trim()
+                editor.document.getText().trim(),
+                ['-p', '-tsvg']
             );
         }
 
@@ -99,12 +102,13 @@ module OkazukiPlantUML {
 
         constructor(private workDir: string, 
             private plantUmlText: string,
-            private args: string[] = ['-p', '-tsvg']) {
+            private args) {
         }
 
         public execute(): Q.Promise<string> {
-            let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-Dfile.encoding=UTF-8', '-jar', PlantUML.plantUmlCommand];
+            let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-jar', PlantUML.plantUmlCommand];
             params.push(...this.args);
+            params.push('-charset', 'utf-8');
             console.log(params);
             let process = child_process.spawn(PlantUML.javaCommand, params);
             if (this.plantUmlText !== null) {

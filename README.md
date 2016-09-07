@@ -31,6 +31,10 @@ Optional.
 
 ## Release Notes
 
+### 0.1.4
+- Revert encoding setting method.
+- Not lost focus when shown preview window.
+
 ### 0.1.3
 - Change encoding setting method. Change -chaset to -Dfile.encoding.
 
