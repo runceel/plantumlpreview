@@ -6,15 +6,71 @@ import * as child_process from 'child_process';
 import * as Q from 'q';
 import * as fs from 'fs';
 
-export function activate(context: vscode.ExtensionContext) {
-    if (!process.env['PLANTUML_HOME'] || !process.env['JAVA_HOME']) {
-        if (!process.env['PLANTUML_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. PLANTUML_HOME.'); } 
-        if (!process.env['JAVA_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. JAVA_HOME.'); } 
-        return;
-    }
+const isDebug = !!process.env['OKAZUKIUML_DEBUG'];
 
-    // 定数
-    const isDebug = !!process.env['OKAZUKIUML_DEBUG'];
+export function activate(context: vscode.ExtensionContext) {
+    new OkazukiPlantUML.PlantUMLExtension(context).initialize();
+}
+
+export function deactivate() {
+}
+
+module OkazukiPlantUML {
+    export class PlantUMLExtension {
+        private provider = new TextDocumentContentProvider();
+
+        constructor(private context: vscode.ExtensionContext) {}
+
+        public initialize() {
+            if (!process.env['PLANTUML_HOME'] || !process.env['JAVA_HOME']) {
+                if (!process.env['PLANTUML_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. PLANTUML_HOME.'); } 
+                if (!process.env['JAVA_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. JAVA_HOME.'); } 
+                return;
+            }
+
+            this.registerTextProvider();
+            this.registerCommands();
+            this.registerDocumentChangedWatcher();
+        }
+
+        private registerTextProvider(): void {
+            let registration = vscode.workspace.registerTextDocumentContentProvider('plantuml-preview', this.provider);
+            this.context.subscriptions.push(registration);
+        }
+
+        private registerCommands(): void {
+            let disposable = vscode.commands.registerCommand('extension.previewPlantUML', () => {
+                return vscode.commands.executeCommand('vscode.previewHtml', TextDocumentContentProvider.previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
+                    .then((success) => {
+                        this.provider.update(TextDocumentContentProvider.previewUri);
+                    }, (reason) => { 
+                        vscode.window.showErrorMessage(reason); 
+                    });            
+            });
+            let disposables = ExportCommandManager.registerExportCommands();
+            this.context.subscriptions.push(disposable, ...disposables);
+        }
+
+        private registerDocumentChangedWatcher(): void {
+            let activeEditorChangedDisposable = vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
+                this.provider.update(TextDocumentContentProvider.previewUri);
+            });
+
+            // update preview
+            let changedTimestamp = new Date().getTime();
+            let textDocumentChangedDisposable = vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
+                if (vscode.window.activeTextEditor.document !== e.document) { return; }
+                changedTimestamp = new Date().getTime();
+                setTimeout(() => {
+                    if (new Date().getTime() - changedTimestamp >= 400) {
+                        this.provider.update(TextDocumentContentProvider.previewUri);
+                    }
+                }, 500);
+            });
+
+            this.context.subscriptions.push(activeEditorChangedDisposable, textDocumentChangedDisposable);
+        }
+    }
 
     class PlantUMLExportFormat {
         constructor(public label: string,
@@ -33,7 +89,7 @@ export function activate(context: vscode.ExtensionContext) {
         public static fromExportFormat(inputPath: string,format: PlantUMLExportFormat): PlantUML {
             return new PlantUML(
                 path.dirname(inputPath),
-                "",
+                null,
                 [inputPath, format.format, '-charset', 'utf-8', '-o', path.dirname(inputPath)]
             );
         }
@@ -51,10 +107,11 @@ export function activate(context: vscode.ExtensionContext) {
             params.push(...this.args);
             console.log(params);
             let process = child_process.spawn(PlantUML.javaCommand, params);
-            if (!!this.plantUmlText) {
+            if (this.plantUmlText !== null) {
                 process.stdin.write(this.plantUmlText);
                 process.stdin.end();
             }
+
             return Q.Promise<string>((resolve, reject, notify) => {
                 var output = '';
                 process.stdout.on('data', x => {
@@ -82,11 +139,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     // ContentProvider
     class TextDocumentContentProvider implements vscode.TextDocumentContentProvider {
-        private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+       public static previewUri = vscode.Uri.parse('plantuml-preview://authority/plantuml-preview');   
+       private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
 
-        private svg: string = '<svg></svg>';
-
-        public provideTextDocumentContent(uri: vscode.Uri): string {
+        public provideTextDocumentContent(uri: vscode.Uri): string | Thenable<string> {
             return this.createPlantumlSnippet();
         }
 
@@ -94,12 +150,11 @@ export function activate(context: vscode.ExtensionContext) {
             return this._onDidChange.event;
         }
 
-        public update(uri: vscode.Uri, svg: string) {
-            this.svg = svg;
+        public update(uri: vscode.Uri) {
             this._onDidChange.fire(uri);
         }
 
-        private createPlantumlSnippet() {
+        private createPlantumlSnippet(): string | Thenable<string> {
             let editor = vscode.window.activeTextEditor;
             if (!(editor.document.languageId === 'plaintext')) {
                 return this.errorSnippet("not plaintext");
@@ -107,20 +162,19 @@ export function activate(context: vscode.ExtensionContext) {
             return this.extractSnippet();
         }
 
-        private extractSnippet(): string {
+        private extractSnippet(): Thenable<string> {
             let editor = vscode.window.activeTextEditor;
-            var r = '<body>' + this.svg + '</body>';
-            return r;
+            return PlantUML.fromTextEditor(editor)
+                .execute()
+                .then(x => `<body style="background-color:white;">${x}</body>`);
         }
 
         private errorSnippet(text: string) {
-            return `<body>
-                <span>` + text + `</span>
-            </body>`
+            return `<body><span>${text}</span></body>`
         }
     }
 
-    class CommandManager {
+    class ExportCommandManager {
         private static formats = [
             new PlantUMLExportFormat('png', '-tpng'),
             new PlantUMLExportFormat('svg', '-tsvg'),
@@ -136,94 +190,18 @@ export function activate(context: vscode.ExtensionContext) {
             new PlantUMLExportFormat('latex:nopreamble', '-tlatex:nopreamble'),
         ];
 
-
         public static registerExportCommands(): vscode.Disposable[] {
             let disposables: vscode.Disposable[] = [];
-            CommandManager.formats.forEach(x => {
+            ExportCommandManager.formats.forEach(x => {
                 let d = vscode.commands.registerCommand('extension.exportPlantUML-' + x.label, () => {
                     let command = PlantUML.fromExportFormat(
                         vscode.window.activeTextEditor.document.uri.fsPath, 
                         x);
-                    let q = Q.defer();
-                    command.execute().then(_ => {
-                        q.resolve();
-                    });
-                    return q;
+                    return command.execute();
                 });
                 disposables.push(d);
             });
             return disposables;
         }
     }
-
-
-    let provider = new TextDocumentContentProvider();
-    let registration = vscode.workspace.registerTextDocumentContentProvider('plantuml-preview', provider);
-
-    let previewUri = vscode.Uri.parse('plantuml-preview://authority/plantuml-preview');   
-
-    let disposable = vscode.commands.registerCommand('extension.previewPlantUML', () => {
-        let editor = vscode.window.activeTextEditor;
-        var d = Q.defer();
-        PlantUML.fromTextEditor(editor)
-            .execute()
-            .then(svg => {
-                vscode.commands.executeCommand('vscode.previewHtml', previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
-                    .then((success) => {
-                        provider.update(previewUri, svg);
-                        d.resolve(); 
-                    }, (reason) => { 
-                        vscode.window.showErrorMessage(reason); 
-                        d.resolve();
-                    });            
-            })
-        return d.promise;
-    });
-
-    let disposables = CommandManager.registerExportCommands();
-
-
-    let saveTextDocumentDisposable = vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
-        if (e === vscode.window.activeTextEditor.document) {
-            PlantUML.fromTextEditor(vscode.window.activeTextEditor)
-                .execute()
-                .then(svg => {
-                    provider.update(previewUri, svg);
-                });
-        }
-    });
-
-    let activeEditorChangedDisposable = vscode.window.onDidChangeActiveTextEditor((editor: vscode.TextEditor) => {
-            PlantUML.fromTextEditor(editor)
-                .execute()
-                .then(svg => {
-                    provider.update(previewUri, svg);
-                });
-    });
-
-    // update preview
-    let changedTimestamp = new Date().getTime();
-    let selectionChangedDisposable = vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
-        if (vscode.window.activeTextEditor.document !== e.document) { return; }
-        changedTimestamp = new Date().getTime();
-        setTimeout(() => {
-            if (new Date().getTime() - changedTimestamp >= 400) {
-                PlantUML.fromTextEditor(vscode.window.activeTextEditor)
-                    .execute()
-                    .then(svg => {
-                        provider.update(previewUri, svg);
-                    });
-            }
-        }, 500);
-    });
-
-    context.subscriptions.push(disposable, 
-        ...disposables,
-        saveTextDocumentDisposable, 
-        activeEditorChangedDisposable, 
-        selectionChangedDisposable);        
-}
-
-// this method is called when your extension is deactivated
-export function deactivate() {
 }

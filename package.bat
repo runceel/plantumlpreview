@@ -1,1 +1,1 @@
-vsce package --baseImagesUrl https://github.com/runceel/plantumlpreview/blob/master
+vsce package --baseImagesUrl https://github.com/runceel/plantumlpreview/blob/master -o vsix

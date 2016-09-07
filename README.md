@@ -27,6 +27,12 @@ PlantUML image previewer.
 
 ## Release Notes
 
+### 0.1.2
+- Refactor
+
+### 0.1.1
+- Change uml background color to white.
+
 ### 0.1.0
 - Refactor
 - Support many export format.
