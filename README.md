@@ -21,6 +21,10 @@ PlantUML image previewer.
 - JAVA_HOME: Java SDK installed directory.
 - PLANTUML_HOME: plantuml.jar installed directory.
 
+Optional.
+
+- GRAPHVIZ_DOT: GraphViz's dot.exe position. see detail [PlantUML site](http://plantuml.com/graphvizdot.html).
+
 ## Known Issues
 
 - Execute preview process all text file.
