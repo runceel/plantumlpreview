@@ -90,7 +90,7 @@ module OkazukiPlantUML {
             return new PlantUML(
                 path.dirname(inputPath),
                 null,
-                [inputPath, format.format, '-charset', 'utf-8', '-o', path.dirname(inputPath)]
+                [inputPath, format.format, '-o', path.dirname(inputPath)]
             );
         }
 
@@ -99,11 +99,11 @@ module OkazukiPlantUML {
 
         constructor(private workDir: string, 
             private plantUmlText: string,
-            private args: string[] = ['-p', '-tsvg', '-charset', 'utf-8']) {
+            private args: string[] = ['-p', '-tsvg']) {
         }
 
         public execute(): Q.Promise<string> {
-            let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-jar', PlantUML.plantUmlCommand];
+            let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-Dfile.encoding=UTF-8', '-jar', PlantUML.plantUmlCommand];
             params.push(...this.args);
             console.log(params);
             let process = child_process.spawn(PlantUML.javaCommand, params);
