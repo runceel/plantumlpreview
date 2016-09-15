@@ -89,11 +89,11 @@ module OkazukiPlantUML {
             );
         }
 
-        public static fromExportFormat(inputPath: string,format: PlantUMLExportFormat): PlantUML {
+        public static fromExportFormat(inputPath: string,format: PlantUMLExportFormat, outputPath: string): PlantUML {
             return new PlantUML(
                 path.dirname(inputPath),
                 null,
-                [inputPath, format.format, '-o', path.dirname(inputPath)]
+                [inputPath, format.format, '-o', outputPath]
             );
         }
 
@@ -198,10 +198,25 @@ module OkazukiPlantUML {
             let disposables: vscode.Disposable[] = [];
             ExportCommandManager.formats.forEach(x => {
                 let d = vscode.commands.registerCommand('extension.exportPlantUML-' + x.label, () => {
-                    let command = PlantUML.fromExportFormat(
-                        vscode.window.activeTextEditor.document.uri.fsPath, 
-                        x);
-                    return command.execute();
+                    let outputDefaultPath = path.dirname(vscode.window.activeTextEditor.document.uri.fsPath);
+                    return vscode.window.showInputBox({ value: outputDefaultPath, prompt: "output folder path" })
+                        .then((outputPath) => {
+                            if (outputPath == null) {
+                                // canceled
+                                return Q.Promise<string>((resolve, reject, notify) => {
+                                    resolve("");
+                                });
+                            }
+                            if (outputPath == "") {
+                                // if equals to defaultvalue,outputPath is passed empty string
+                                outputPath = outputDefaultPath;
+                            }
+                            let command = PlantUML.fromExportFormat(
+                                vscode.window.activeTextEditor.document.uri.fsPath,
+                                x,
+                                outputPath);
+                            return command.execute();
+                        });
                 });
                 disposables.push(d);
             });
