@@ -18,8 +18,8 @@ PlantUML image previewer.
 
 **Must** set enviroment variable.
 
-- JAVA_HOME: Java SDK installed directory.
-- PLANTUML_HOME: plantuml.jar installed directory.
+- JAVA_HOME: Java SDK installed directory.(For example: C:\Program Files\Java\jdk1.8.0_101)
+- PLANTUML_JAR: Path to plantuml.jar.(For example: C:\Users\UserName\bin\plantuml\plantuml.jar)
 
 Optional.
 
@@ -30,6 +30,9 @@ Optional.
 - Execute preview process all text file.
 
 ## Release Notes
+
+### 0.1.5
+- Change setting method. PLANTUML_HOME -> PLANTUML_JAR
 
 ### 0.1.4
 - Revert encoding setting method.
