@@ -30,6 +30,8 @@ Optional.
 - Execute preview process all text file.
 
 ## Release Notes
+### 0.1.7
+- Bug fix.
 
 ### 0.1.5
 - Change setting method. PLANTUML_HOME -> PLANTUML_JAR

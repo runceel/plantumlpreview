@@ -22,15 +22,14 @@ module OkazukiPlantUML {
         constructor(private context: vscode.ExtensionContext) {}
 
         public initialize() {
-            if ((!process.env['PLANTUML_HOME'] || !process.env['PLANTUML_JAR']) || !process.env['JAVA_HOME']) {
+            if ((!!process.env['PLANTUML_HOME'] || !!process.env['PLANTUML_JAR']) && !!process.env['JAVA_HOME']) {
+                this.registerTextProvider();
+                this.registerCommands();
+                this.registerDocumentChangedWatcher();
+            } else {
                 if (!process.env['PLANTUML_HOME'] || !process.env['PNALTUML_JAR']) { vscode.window.showErrorMessage('Set enviroment variable. PLANTUML_HOME or PLANTUML_JAR.'); } 
                 if (!process.env['JAVA_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. JAVA_HOME.'); } 
-                return;
             }
-
-            this.registerTextProvider();
-            this.registerCommands();
-            this.registerDocumentChangedWatcher();
         }
 
         private registerTextProvider(): void {
