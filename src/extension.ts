@@ -23,7 +23,7 @@ module OkazukiPlantUML {
 
         public initialize() {
             if (!process.env['PLANTUML_HOME'] || !process.env['JAVA_HOME']) {
-                if (!process.env['PLANTUML_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. PLANTUML_HOME.'); } 
+                if (!process.env['PLANTUML_HOME'] || !process.env['PNALTUML_JAR']) { vscode.window.showErrorMessage('Set enviroment variable. PLANTUML_HOME.'); } 
                 if (!process.env['JAVA_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. JAVA_HOME.'); } 
                 return;
             }
@@ -97,7 +97,9 @@ module OkazukiPlantUML {
             );
         }
 
-        private static plantUmlCommand = path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
+        private static plantUmlCommand = !!process.env['PLANTUML_JAR'] ?
+            process.env['PLANTUML_JAR'] :
+            path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
         private static javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java');
 
         constructor(private workDir: string, 
