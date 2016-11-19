@@ -16,14 +16,22 @@ PlantUML image previewer.
 
 ## Extension Settings
 
-**Must** set enviroment variable.
+You **must** set the following environment variables for the extension to work:
 
-- JAVA_HOME: Java SDK installed directory.(For example: C:\Program Files\Java\jdk1.8.0_101)
-- PLANTUML_JAR: Path to plantuml.jar.(For example: C:\Users\UserName\bin\plantuml\plantuml.jar)
+- `JAVA_HOME`: Java SDK installed directory (must have a `bin` sub-directory)
+ - Windows example: `C:\Program Files\Java\jdk1.8.0_101)`
+ - macOS example: `/Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home`
+- `PLANTUML_JAR`: Path for the `plantuml.jar` file
+ - Windows example: `C:\Users\UserName\bin\plantuml\plantuml.jar`
+ - macOS example: `/usr/local/Cellar/plantuml/8048/libexec/plantuml.jar`
 
-Optional.
+If you want to use PlantUML's functionality that requires GraphViz, you need to set the `GRAPHVIZ_DOT` environment variable, as explained [here](http://plantuml.com/graphvizdot.html):
 
-- GRAPHVIZ_DOT: GraphViz's dot.exe position. see detail [PlantUML site](http://plantuml.com/graphvizdot.html).
+- `GRAPHVIZ_DOT`: Path for the `dot` executable binary
+ - Windows example: `C:\Program Files\Graphviz\bin\dot.exe`
+ - macOS example: `/usr/local/Cellar/graphviz/2.38.0_1/bin/dot`
+ 
+After setting these environment variables you need to restart VSCode for the extension to work.
 
 ## Known Issues
 
