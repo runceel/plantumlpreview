@@ -30,6 +30,9 @@ Optional.
 - Execute preview process all text file.
 
 ## Release Notes
+### 0.1.8
+- Fix typo
+
 ### 0.1.7
 - Bug fix.
 
