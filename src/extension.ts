@@ -161,7 +161,7 @@ module OkazukiPlantUML {
 
         private createPlantumlSnippet(): string | Thenable<string> {
             let editor = vscode.window.activeTextEditor;
-            if (!(editor.document.languageId === 'plaintext')) {
+            if (!(editor.document.languageId === 'plaintext' || editor.document.languageId === 'restructuredtext')) {
                 return this.errorSnippet("not plaintext");
             }
             return this.extractSnippet();
@@ -171,7 +171,7 @@ module OkazukiPlantUML {
             let editor = vscode.window.activeTextEditor;
             return PlantUML.fromTextEditor(editor)
                 .execute()
-                .then(x => `<body style="background-color:white;">${x}</body>`);
+                .then(x => `<body style="background-color:white;width:100%;height:100%;overflow:visible;">${x}</body>`);
         }
 
         private errorSnippet(text: string) {
