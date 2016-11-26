@@ -38,6 +38,10 @@ After setting these environment variables you need to restart VSCode for the ext
 - Execute preview process all text file.
 
 ## Release Notes
+### 0.1.9
+- Improvement scroll.
+- Support restructuredtext.
+
 ### 0.1.8
 - Fix typo
 
