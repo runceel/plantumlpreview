@@ -6,7 +6,7 @@ PlantUML is [here](http://plantuml.com/).
 
 ## Features
 
-PlantUML image previewer.
+-PlantUML image previewer.
 
 ![Preview window](images/introduction.gif?raw=true)
 
@@ -15,6 +15,7 @@ PlantUML image previewer.
 - `PlantUML Export ***(*** is format type)` : Export png, svg, eps, etc... to same directory.
 
 ## Extension Settings
+
 
 You **must** set the following environment variables for the extension to work:
 
@@ -36,6 +37,7 @@ After setting these environment variables you need to restart VSCode for the ext
 ## Known Issues
 
 - Execute preview process all text file.
+- Preview doesn't show correctry -> [#19](https://github.com/runceel/plantumlpreview/issues/19)
 
 ## Release Notes
 ### 0.1.9
