@@ -84,7 +84,7 @@ module OkazukiPlantUML {
             return new PlantUML(
                 path.dirname(editor.document.uri.fsPath),
                 editor.document.getText().trim(),
-                ['-p', '-tsvg']
+                ['-p', '-tpng']
             );
         }
 
@@ -106,7 +106,7 @@ module OkazukiPlantUML {
             private args) {
         }
 
-        public execute(): Q.Promise<string> {
+        public execute(): Q.Promise<Buffer> {
             let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-jar', PlantUML.plantUmlCommand];
             params.push(...this.args);
             params.push('-charset', 'utf-8');
@@ -117,13 +117,15 @@ module OkazukiPlantUML {
                 process.stdin.end();
             }
 
-            return Q.Promise<string>((resolve, reject, notify) => {
-                var output = '';
-                process.stdout.on('data', x => {
-                    output += x;
+            return Q.Promise<Buffer>((resolve, reject, notify) => {
+                let output:Buffer[] = [];
+                let bufferLength = 0;
+                process.stdout.on('data', (x: Buffer) => {
+                    output.push(x);
+                    bufferLength += x.length;
                 });
                 process.stdout.on('close', () => {
-                    resolve(output);
+                    resolve(Buffer.concat(output, bufferLength));
                 });
 
                 let stderror = '';
@@ -171,7 +173,11 @@ module OkazukiPlantUML {
             let editor = vscode.window.activeTextEditor;
             return PlantUML.fromTextEditor(editor)
                 .execute()
-                .then(x => `<body style="background-color:white;width:100%;height:100%;overflow:visible;">${x}</body>`);
+                .then(x => 
+                {
+                    let base64 = x.toString('base64');
+                    return `<body style="background-color:white;width:100%;height:100%;overflow:visible;"><img src="data:image/png;base64,${base64}"></img></body>`
+                });
         }
 
         private errorSnippet(text: string) {
@@ -204,8 +210,8 @@ module OkazukiPlantUML {
                         .then((outputPath) => {
                             if (outputPath == null) {
                                 // canceled
-                                return Q.Promise<string>((resolve, reject, notify) => {
-                                    resolve("");
+                                return Q.Promise<Buffer>((resolve, reject, notify) => {
+                                    resolve(null);
                                 });
                             }
                             if (outputPath == "") {

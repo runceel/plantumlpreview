@@ -40,6 +40,9 @@ After setting these environment variables you need to restart VSCode for the ext
 - Preview doesn't show correctry -> [#19](https://github.com/runceel/plantumlpreview/issues/19)
 
 ## Release Notes
+### 0.2.0
+- Fix preview issue. [#19](https://github.com/runceel/plantumlpreview/issues/19), [#20](https://github.com/runceel/plantumlpreview/issues/20)
+
 ### 0.1.9
 - Improvement scroll.
 - Support restructuredtext.
