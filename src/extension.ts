@@ -43,7 +43,7 @@ module OkazukiPlantUML {
                 return vscode.commands.executeCommand('vscode.previewHtml', TextDocumentContentProvider.previewUri, vscode.ViewColumn.Two, 'PlantUML Preview')
                     .then((success) => {
                         this.provider.update(TextDocumentContentProvider.previewUri);
-                        editor.show();
+                        vscode.window.showTextDocument(editor.document);
                     }, (reason) => { 
                         vscode.window.showErrorMessage(reason); 
                     });            
@@ -107,6 +107,11 @@ module OkazukiPlantUML {
         }
 
         public execute(): Q.Promise<Buffer> {
+            if (!path.isAbsolute(this.workDir)) {
+                return Q.Promise<Buffer>((resolver, reject, notify) => {
+                    reject("Please open folder and save file before export.");
+                });
+            }
             let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-jar', PlantUML.plantUmlCommand];
             params.push(...this.args);
             params.push('-charset', 'utf-8');
@@ -223,6 +228,9 @@ module OkazukiPlantUML {
                                 x,
                                 outputPath);
                             return command.execute();
+                        })
+                        .then(() =>{}, (reason) => {
+                            vscode.window.showErrorMessage(reason);   
                         });
                 });
                 disposables.push(d);
