@@ -16,19 +16,48 @@ export function deactivate() {
 }
 
 module OkazukiPlantUML {
+    class PlantUMLExtensionOptions
+    {
+        constructor(public javaHome: string
+            , public plantUmlHome: string
+            , public plantUmlJar: string 
+            , public graphviz: string)
+        {
+
+        }
+        public static create(): PlantUMLExtensionOptions
+        {
+            let cfg = vscode.workspace.getConfiguration();
+            let javaHome = PlantUMLExtensionOptions.getConfigOrEnvironment(cfg, "javaHome", "JAVA_HOME");
+            let plantUmlHome = PlantUMLExtensionOptions.getConfigOrEnvironment(cfg, "plantUmlHome", "PLANTUML_HOME");
+            let plantUmlJar = PlantUMLExtensionOptions.getConfigOrEnvironment(cfg, "plantUmlJar", "PLANTUML_JAR");
+            let graphviz = PlantUMLExtensionOptions.getConfigOrEnvironment(cfg, "graphvizDot", "GRAPHVIZ_DOT");
+            return new PlantUMLExtensionOptions(javaHome, plantUmlHome, plantUmlJar, graphviz);
+        }
+        private static getConfigOrEnvironment(cfg: vscode.WorkspaceConfiguration, cfgName: string, envName: string): string {
+            let cfgobj = cfg.has("okazukiplantuml") ? cfg.get("okazukiplantuml") : null;
+            let s: string = cfgobj[cfgName];
+            if(s == null || s == "")
+            {
+                s = process.env[envName];
+            }
+            return s;
+        }
+    }
     export class PlantUMLExtension {
         private provider = new TextDocumentContentProvider();
 
         constructor(private context: vscode.ExtensionContext) {}
 
         public initialize() {
-            if ((!!process.env['PLANTUML_HOME'] || !!process.env['PLANTUML_JAR']) && !!process.env['JAVA_HOME']) {
+            let opts = PlantUMLExtensionOptions.create();
+            if ((!!opts.plantUmlHome || !!opts.plantUmlJar) && !!opts.javaHome) {
                 this.registerTextProvider();
                 this.registerCommands();
                 this.registerDocumentChangedWatcher();
             } else {
-                if (!process.env['PLANTUML_HOME'] || !process.env['PLANTUML_JAR']) { vscode.window.showErrorMessage('Set enviroment variable. PLANTUML_HOME or PLANTUML_JAR.'); } 
-                if (!process.env['JAVA_HOME']) { vscode.window.showErrorMessage('Set enviroment variable. JAVA_HOME.'); } 
+                if (!opts.plantUmlHome || !opts.plantUmlJar) { vscode.window.showErrorMessage('Set enviroment variable. PLANTUML_HOME or PLANTUML_JAR.'); } 
+                if (!opts.javaHome) { vscode.window.showErrorMessage('Set enviroment variable. JAVA_HOME.'); } 
             }
         }
 
@@ -80,30 +109,40 @@ module OkazukiPlantUML {
     }
 
     class PlantUML {
-        public static fromTextEditor(editor: vscode.TextEditor): PlantUML {
+        public static fromTextEditor(editor: vscode.TextEditor, opts: PlantUMLExtensionOptions): PlantUML {
             return new PlantUML(
                 path.dirname(editor.document.uri.fsPath),
                 editor.document.getText().trim(),
-                ['-p', '-tpng']
+                ['-p', '-tpng'],
+                opts
             );
         }
 
-        public static fromExportFormat(inputPath: string,format: PlantUMLExportFormat, outputPath: string): PlantUML {
+        public static fromExportFormat(inputPath: string,format: PlantUMLExportFormat, outputPath: string, opts: PlantUMLExtensionOptions): PlantUML {
             return new PlantUML(
                 path.dirname(inputPath),
                 null,
-                [inputPath, format.format, '-o', outputPath]
+                [inputPath, format.format, '-o', outputPath],
+                opts
             );
         }
 
-        private static plantUmlCommand = !!process.env['PLANTUML_JAR'] ?
-            process.env['PLANTUML_JAR'] :
-            path.join(process.env['PLANTUML_HOME'], 'plantuml.jar');
-        private static javaCommand = path.join(process.env['JAVA_HOME'], 'bin', 'java');
+        private static buildPlantUmlCommand(opts: PlantUMLExtensionOptions): string
+        {
+            return !!opts.plantUmlJar ?
+                opts.plantUmlJar :
+                path.join(opts.plantUmlHome, "plantuml.jar");
+        }
+
+        private static buildJavaCommand(opts: PlantUMLExtensionOptions): string
+        {
+            return path.join(opts.javaHome, "bin", "java");
+        }
 
         constructor(private workDir: string, 
             private plantUmlText: string,
-            private args) {
+            private args,
+            private extensionOptions: PlantUMLExtensionOptions) {
         }
 
         public execute(): Q.Promise<Buffer> {
@@ -112,32 +151,41 @@ module OkazukiPlantUML {
                     reject("Please open folder and save file before export.");
                 });
             }
-            let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-jar', PlantUML.plantUmlCommand];
+            let params = ['-Duser.dir=' + this.workDir, '-Djava.awt.headless=true', '-jar', PlantUML.buildPlantUmlCommand(this.extensionOptions)];
             params.push(...this.args);
             params.push('-charset', 'utf-8');
             console.log(params);
-            let process = child_process.spawn(PlantUML.javaCommand, params);
+            // cloning environment variables
+            let processEnv = {};
+            Object.keys(process.env).forEach((key) => {
+                processEnv[key] = process.env[key];
+            });
+            if(!!this.extensionOptions.graphviz)
+            {
+                processEnv["GRAPHVIZ_DOT"] = this.extensionOptions.graphviz;
+            }
+            let childprocess = child_process.spawn(PlantUML.buildJavaCommand(this.extensionOptions), params, { env: processEnv });
             if (this.plantUmlText !== null) {
-                process.stdin.write(this.plantUmlText);
-                process.stdin.end();
+                childprocess.stdin.write(this.plantUmlText);
+                childprocess.stdin.end();
             }
 
             return Q.Promise<Buffer>((resolve, reject, notify) => {
                 let output:Buffer[] = [];
                 let bufferLength = 0;
-                process.stdout.on('data', (x: Buffer) => {
+                childprocess.stdout.on('data', (x: Buffer) => {
                     output.push(x);
                     bufferLength += x.length;
                 });
-                process.stdout.on('close', () => {
+                childprocess.stdout.on('close', () => {
                     resolve(Buffer.concat(output, bufferLength));
                 });
 
                 let stderror = '';
-                process.stderr.on('data', x => {
+                childprocess.stderr.on('data', x => {
                      stderror += x; 
                 });
-                process.stderr.on('close', () => {
+                childprocess.stderr.on('close', () => {
                     if (isDebug && !!stderror) {
                         vscode.window.showErrorMessage(stderror);
                     }
@@ -176,7 +224,7 @@ module OkazukiPlantUML {
 
         private extractSnippet(): Thenable<string> {
             let editor = vscode.window.activeTextEditor;
-            return PlantUML.fromTextEditor(editor)
+            return PlantUML.fromTextEditor(editor, PlantUMLExtensionOptions.create())
                 .execute()
                 .then(x => 
                 {
@@ -226,7 +274,8 @@ module OkazukiPlantUML {
                             let command = PlantUML.fromExportFormat(
                                 vscode.window.activeTextEditor.document.uri.fsPath,
                                 x,
-                                outputPath);
+                                outputPath,
+                                PlantUMLExtensionOptions.create());
                             return command.execute();
                         })
                         .then(() =>{}, (reason) => {
