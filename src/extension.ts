@@ -168,7 +168,7 @@ module OkazukiPlantUML {
 
         private createPlantumlSnippet(): string | Thenable<string> {
             let editor = vscode.window.activeTextEditor;
-            if (!(editor.document.languageId === 'plaintext' || editor.document.languageId === 'restructuredtext')) {
+            if (!(editor.document.languageId === 'plaintext' || editor.document.languageId === 'restructuredtext' || editor.document.languageId === 'plantuml')) {
                 return this.errorSnippet("not plaintext");
             }
             return this.extractSnippet();
