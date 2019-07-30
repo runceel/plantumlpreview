@@ -1,6 +1,6 @@
 # Notice
 
-I strong recommend to use below plugin.
+I stronglly recommend to use below plugin.
 I don't intend to update this plugin.
 
 [PlantUML](https://github.com/qjebbs/vscode-plantuml)
