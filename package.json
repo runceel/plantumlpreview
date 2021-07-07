@@ -85,7 +85,26 @@
         "command": "extension.exportPlantUML-latex:nopreamble",
         "title": "PlantUML Export LATEX:NOPREAMBLE"
       }
-    ]
+    ],
+    "configuration": {
+      "properties": {
+        "okazukiplantuml.javaHome": {
+          "type":"string",
+          "description": "path to java home(overriding JAVA_HOME environment variable)",
+          "default": null
+        },
+        "okazukiplantuml.plantUmlJar": {
+          "type":"string",
+          "description": "path to PlantUML jar file(overriding PLANTUML_JAR environment variable)",
+          "default": null
+        },
+        "okazukiplantuml.graphvizDot": {
+          "type":"string",
+          "description": "path to Graphviz dot executable binary(overriding GRAPHVIZ_DOT environment variable)",
+          "default": null
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
